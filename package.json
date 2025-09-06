@@ -8,13 +8,14 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "capture-stuff",
-      "title": "capture stuff",
+      "name": "index",
+      "title": "CLIP",
       "subtitle": "capture all the stuff",
       "description": "what the it should",
       "mode": "view"
     }
   ],
+
   "dependencies": {
     "@raycast/api": "^1.102.6",
     "@raycast/utils": "^1.17.0"
