@@ -6,6 +6,7 @@ interface CaptureData {
   url: string;
   title: string;
   includeContent: boolean;
+  includeScreenshot: boolean;
   comment: string;
 }
 
@@ -47,19 +48,18 @@ export default function Command() {
       url: "",
       title: "",
       includeContent: false,
+      includeScreenshot: true,
       comment: "",
     },
   });
 
-  // This effect runs when the `data` from `usePromise` is successfully fetched.
-  // It uses the `reset` function from `useForm` to update the form's state
-  // with the fetched title and URL, without conflicting with user input.
   useEffect(() => {
     if (data) {
       reset({
         url: data.url || "",
         title: data.title || "",
-        includeContent: false, // You can decide to keep or reset these
+        includeContent: false,
+        includeScreenshot: true,
         comment: "",
       });
     }
@@ -74,8 +74,14 @@ export default function Command() {
         </ActionPanel>
       }
     >
-      <Form.Checkbox label="Include Page Content?" {...itemProps.includeContent}
+      <Form.TextArea
+        title="Comment"
+        placeholder="Add any comments..."
+        autoFocus
+        {...itemProps.comment}
       />
+      <Form.Checkbox label="Include Page Content?" {...itemProps.includeContent} />
+      <Form.Checkbox label="Include Screenshot?" {...itemProps.includeScreenshot} />
       <Form.TextField
         title="Title"
         placeholder="Page Title"
@@ -86,12 +92,6 @@ export default function Command() {
         placeholder="https://example.com"
         {...itemProps.url}
       />
-      <Form.TextArea
-        title="Comment"
-        placeholder="Add any comments..."
-        {...itemProps.comment}
-      />
     </Form>
   );
 }
-
