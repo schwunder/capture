@@ -23,6 +23,13 @@
       "subtitle": "capture all the stuff",
       "description": "what the it should",
       "mode": "view"
+    },
+    {
+      "name": "instant",
+      "title": "CLIP instant",
+      "subtitle": "capture all the stuff",
+      "description": "what the it should",
+      "mode": "no-view"
     }
   ],
 
