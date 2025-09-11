@@ -6,6 +6,16 @@
   "icon": "extension-icon.png",
   "author": "schwunder",
   "license": "MIT",
+  "preferences": [
+    {
+      "name": "clipDirectory",
+      "title": "clip Directory",
+      "description": "Directory where clippings are stored",
+      "type": "directory",
+      "default": "Documents/clip",
+      "required": false
+    }
+  ],
   "commands": [
     {
       "name": "index",
