@@ -1,6 +1,7 @@
-import { BrowserExtension, Action, ActionPanel, Form, showToast, Toast } from "@raycast/api";
-import { usePromise, useForm } from "@raycast/utils";
+import { BrowserExtension, Action, ActionPanel, Form, showToast, Toast, closeMainWindow } from "@raycast/api";
+import { usePromise, useForm, runAppleScript } from "@raycast/utils";
 import { useEffect } from "react";
+import fs from "node:fs";
 
 interface CaptureData {
   url: string;
@@ -9,6 +10,7 @@ interface CaptureData {
   includeScreenshot: boolean;
   comment: string;
 }
+
 
 const getBrowserData = async () => {
   try {
@@ -32,12 +34,41 @@ const getBrowserData = async () => {
   }
 };
 
+// /Users/alien/Browsercaptures
+const storeBrowserData = async (data, content) => {
+  try {
+    fs.writeFileSync("/Users/alien/Browsercaptures/baseData.json", JSON.stringify(data));
+  }
+  catch (error) {
+    console.error(error);
+  }
+  if (content) {
+    try {
+      fs.writeFileSync("/Users/alien/Browsercaptures/content.md", content);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+}
+
+const storeScreenshot = async() => {
+  await closeMainWindow();
+  const script = `do shell script "screencapture /Users/alien/Browsercaptures/screenshot.png"`
+  runAppleScript(
+    script
+  );
+}
+
 export default function Command() {
   const { data, isLoading } = usePromise(getBrowserData);
 
   const { handleSubmit, itemProps, reset } = useForm<CaptureData>({
     onSubmit(values) {
       console.log("Captured values:", values);
+      storeBrowserData(values, data?.text);
+      if (values.includeScreenshot) {
+        storeScreenshot();
+      }
       showToast({
         style: Toast.Style.Success,
         title: "Capture Successful",
