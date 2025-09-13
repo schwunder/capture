@@ -1,32 +1,12 @@
-import { usePromise } from "@raycast/utils";
 import {
   Action,
   ActionPanel,
   Form,
-  getPreferenceValues,
 } from "@raycast/api";
-import os from "os";
-import * as path from "path";
-
-import { get } from "./utils";
-import { formHook } from "./main";
-
-
-const home = os.homedir();
-const preferences = getPreferenceValues<Preferences>();
-const { clipDirectory, captureContent, captureScreenshot } = preferences;
-const directory = path.join(home, clipDirectory);
-
-
-
-
-
+import { mainHook } from "./main";
 
 export default function Command() {
-  const { data, isLoading } = usePromise(() => get(), []);
-
-  const { handleSubmit, itemProps } = formHook(directory, captureContent, captureScreenshot, data  )
-
+const {data, isLoading, itemProps, handleSubmit} = mainHook();
   return (
     <Form
       isLoading={isLoading}

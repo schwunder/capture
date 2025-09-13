@@ -20,7 +20,7 @@ type Spec = Base & {
   comment: string;
 };
 
-type Full = Extd & Spec;
+type Full = Extd & Spec & {timeStamp: number};
 
 const mkdir = (path: string) => {
   try {
@@ -48,9 +48,9 @@ const screenshot =  (path: string, name: string) => {
 };
 
 const store = (path: string, clip: Full, name: string, contentFlag: boolean) => {
-  const {content, ...spec} = clip;
+  const {content, ...rest} = clip;
   try {
-    fs.writeFileSync(`${path}/${name}.json`, JSON.stringify(spec));
+    fs.writeFileSync(`${path}/${name}.json`, JSON.stringify(rest));
   } catch (error) {
     console.error(error);
   }
@@ -64,19 +64,22 @@ const store = (path: string, clip: Full, name: string, contentFlag: boolean) => 
 };
 
 const get = async (): Promise<Extd> => {
-  const tab = (await BrowserExtension.getTabs()).find((tab) => tab.active);
+  const tabsPromise = BrowserExtension.getTabs();
+  const contentPromise = BrowserExtension.getContent({ format: "markdown" });
+
+  const [tabs, content] = await Promise.all([tabsPromise, contentPromise]);
+
+  const tab = tabs.find((t) => t.active);
   if (!tab?.url) {
     const error = new Error("No Active Tab");
     error.name = "NoActiveTab";
     throw error;
   }
 
-
   return {
     title: tab.title ?? "Untitled",
     url: tab.url,
-    content: await BrowserExtension.getContent({ format: "markdown" }),
-  };
+    content: content, };
 };
 
 
