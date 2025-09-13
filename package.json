@@ -14,6 +14,24 @@
       "type": "directory",
       "default": "Documents/clip",
       "required": false
+    },
+    {
+      "name": "captureContent",
+      "title": "capture content",
+      "description": "should the tabs content be captured?",
+      "type": "checkbox",
+      "label": "do you want to capture the content?",
+      "required": false,
+      "default": false
+    },
+    {
+      "name": "captureScreenshot",
+      "title": "capture screenshot",
+      "description": "should a screenshot be taken",
+      "type": "checkbox",
+      "label": "do you want to take a screenshot?",
+      "required": false,
+      "default": true
     }
   ],
   "commands": [
