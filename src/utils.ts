@@ -20,7 +20,7 @@ type Spec = Base & {
   comment: string;
 };
 
-type Full = Extd & Spec & {timeStamp: number};
+type Full = Extd & Spec;
 
 const mkdir = (path: string) => {
   try {
@@ -34,9 +34,15 @@ const mkdir = (path: string) => {
   }
 };
 
-const hash = (data: Spec) => {
-  const {title, url, comment} = data;
-  const combo = `${title}\x00${url}\x00${comment}`;
+const hash = (data: Spec | Base, instant: boolean) => {
+  let title, url, comment, combo;
+  if (instant) {
+    ({ title, url } = data as Base);
+    combo = `${title}\x00${url}`;
+  } else {
+    ({ title, url, comment } = data as Spec);
+    combo = `${title}\x00${url}\x00${comment}`;
+  }
   const hash = createHash('sha256');
   hash.update(combo);
   return hash.digest('hex');
@@ -47,10 +53,11 @@ const screenshot =  (path: string, name: string) => {
   runAppleScript(script);
 };
 
-const store = (path: string, clip: Full, name: string, contentFlag: boolean) => {
+const store = (path: string, clip: Full | Extd, name: string, contentFlag: boolean) => {
   const {content, ...rest} = clip;
+  const timeStamp = Date.now();
   try {
-    fs.writeFileSync(`${path}/${name}.json`, JSON.stringify(rest));
+      fs.writeFileSync(`${path}/${name}.json`, JSON.stringify({...rest, timeStamp}));
   } catch (error) {
     console.error(error);
   }

@@ -10,39 +10,40 @@ type FormValues = {
   captureScreenshot: boolean;
 };
 
-const mainHook = () => {
+const preamble = () => {
   const home = os.homedir();
   const preferences = getPreferenceValues<Preferences>();
   const { clipDirectory, captureContent, captureScreenshot } = preferences;
   const directory = path.join(home, clipDirectory);
+  return {directory, captureContent, captureScreenshot};
+}
 
+
+const mainHook = () => {
+  const {directory, captureContent, captureScreenshot} = preamble();
   const { data, isLoading } = usePromise(() => get(), []);
-
-  const { handleSubmit, itemProps } = formHook(directory, captureContent, captureScreenshot, data);
+  const instant = false;
+  const { handleSubmit, itemProps } = formHook(directory, captureContent, captureScreenshot, data, instant);
   return { data, isLoading, itemProps, handleSubmit };
 };
 
-const formHook = (directory: string, captureContent: boolean, captureScreenshot: boolean, data: Extd | undefined) => {
+const formHook = (directory: string, captureContent: boolean, captureScreenshot: boolean, data: Extd | undefined, instant: boolean) => {
   const { handleSubmit, itemProps } = useForm<FormValues>({
     onSubmit(values) {
       if (!data) {
         showToast({ style: Toast.Style.Failure, title: "Error: No browser data found" });
         return;
       }
-
-      const timeStamp = Date.now();
-
       const toHash: Spec = {
         title: data.title,
         url: data.url,
         comment: values.comment,
       };
-      const clipName = hash(toHash);
+      const clipName = hash(toHash, instant);
 
       mkdir(directory);
       const toStore: Full = {
         ...data,
-        timeStamp: timeStamp,
         comment: values.comment,
       };
       store(directory, toStore, clipName, values.captureContent);
@@ -62,4 +63,4 @@ const formHook = (directory: string, captureContent: boolean, captureScreenshot:
   return { handleSubmit, itemProps };
 };
 
-export { mainHook };
+export { mainHook, preamble };
