@@ -1,23 +1,32 @@
-// src/instant.tsx
-import { closeMainWindow, showToast, Toast } from "@raycast/api";
-import { get, hash, screenshot, store } from "./utils";
-import { preamble } from "./main";
+import { closeMainWindow, getPreferenceValues, PopToRootType, showToast, Toast } from "@raycast/api";
+import {
+  onError,
+  fetch,
+} from "./main";
+import fs from "node:fs";
+import { runAppleScript } from "@raycast/utils";
+import path from "path";
+import os from "os";
 
 export default async function Command() {
   await closeMainWindow();
-  const data = await get();
-  if (!data) {
-    showToast({ style: Toast.Style.Failure, title: "Error: No browser data found" });
-    return;
+  try {
+    const { directory, isContent, isScreenshot } = getPreferenceValues<Preferences>();
+    const dir = path.join(os.homedir(), directory);
+    const {content, url, title} = await fetch();
+    const timeStamp = Date.now();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(`${dir}/${timeStamp}.json`, JSON.stringify({timeStamp, url, title}, null, 2));
+    if (isContent && content) {
+      fs.writeFileSync(`${dir}/${timeStamp}.md`, content);
+    }
+    if (isScreenshot) {
+      closeMainWindow({ popToRootType: PopToRootType.Immediate });
+      const script = `do shell script "screencapture ${dir}/${timeStamp}.png"`;
+      runAppleScript(script);
+    }
+    showToast({ style: Toast.Style.Success, title: "clipped." });
+  } catch (err) {
+    onError(err);
   }
-  const {directory, captureContent, captureScreenshot} = preamble();
-  const instant = true;
-  const {url, title} = data;
-  const name = hash({url, title}, instant);
-  store(directory, data, name, captureContent);
-  if (captureScreenshot) {
-    screenshot(directory, name);
-  }
-  showToast({ style: Toast.Style.Success, title: "Clipped successfully!" });
-  return;
 }
