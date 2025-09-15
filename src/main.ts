@@ -1,66 +1,102 @@
-import { Extd, Full, get, hash, mkdir, screenshot, Spec, store } from "./utils";
-import { useForm, usePromise } from "@raycast/utils";
-import { closeMainWindow, getPreferenceValues, PopToRootType, showToast, Toast } from "@raycast/api";
+import {
+  BrowserExtension,
+  closeMainWindow,
+  getPreferenceValues,
+  PopToRootType,
+  showToast,
+  Toast,
+} from "@raycast/api";
+import { runAppleScript, useForm, usePromise } from "@raycast/utils";
+import fs from "node:fs";
 import os from "os";
 import path from "path";
 
-type FormValues = {
-  comment: string;
-  captureContent: boolean;
-  captureScreenshot: boolean;
+// Types
+export type Page = {
+  title: string;
+  url: string;
+  content: string;
 };
 
-const preamble = () => {
-  const home = os.homedir();
-  const preferences = getPreferenceValues<Preferences>();
-  const { clipDirectory, captureContent, captureScreenshot } = preferences;
-  const directory = path.join(home, clipDirectory);
-  return {directory, captureContent, captureScreenshot};
-}
-
-
-const mainHook = () => {
-  const {directory, captureContent, captureScreenshot} = preamble();
-  const { data, isLoading } = usePromise(() => get(), []);
-  const instant = false;
-  const { handleSubmit, itemProps } = formHook(directory, captureContent, captureScreenshot, data, instant);
-  return { data, isLoading, itemProps, handleSubmit };
+export type Config = {
+  comment?: string;
+  isContent: boolean;
+  isScreenshot: boolean;
 };
 
-const formHook = (directory: string, captureContent: boolean, captureScreenshot: boolean, data: Extd | undefined, instant: boolean) => {
-  const { handleSubmit, itemProps } = useForm<FormValues>({
-    onSubmit(values) {
-      if (!data) {
-        showToast({ style: Toast.Style.Failure, title: "Error: No browser data found" });
+// Error Handling
+export const onError = (err: unknown) => {
+  if (err instanceof Error) {
+    let title = "Clipping Failed";
+    const message = err.message;
+
+    if ("code" in err) {
+      if (err.code === "EEXIST") {
         return;
       }
-      const toHash: Spec = {
-        title: data.title,
-        url: data.url,
-        comment: values.comment,
-      };
-      const clipName = hash(toHash, instant);
+      title = "File System Error";
+    } else if (message === "could not get tabs") {
+      title = "Data Error";
+    }
 
-      mkdir(directory);
-      const toStore: Full = {
-        ...data,
-        comment: values.comment,
-      };
-      store(directory, toStore, clipName, values.captureContent);
+    showToast({ style: Toast.Style.Failure, title: title, message: message });
+  } else {
+    showToast({ style: Toast.Style.Failure, title: "An Unknown Error Occurred" });
+  }
+};
 
-      if (values.captureScreenshot) {
-        closeMainWindow({ popToRootType: PopToRootType.Immediate });
-        screenshot(directory, clipName);
+export const fetch = async (): Promise<Page> => {
+  const tabs = await BrowserExtension.getTabs();
+  const tab = tabs.find((t) => t.active);
+
+  if (!tab?.url) {
+    throw new Error("could not get tabs");
+  }
+
+  const content = await BrowserExtension.getContent({ format: "markdown" });
+
+  return {
+    title: tab.title ?? "Untitled",
+    url: tab.url,
+    content: content,
+  };
+};
+
+// Main React Hook
+export const useClip = () => {
+  const { directory, isContent, isScreenshot } = getPreferenceValues<Preferences>();
+  const dir = path.join(os.homedir(), directory);
+  const { data, isLoading, error } = usePromise(() => fetch());
+  const { handleSubmit, itemProps } = useForm<Config>({
+    onSubmit(values) {
+      if (error) {
+        onError(error);
+        return;      }
+      try {
+        const {url ,title, content} = data!;
+        const {comment, isContent, isScreenshot} = values;
+        const timeStamp = Date.now();
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(`${dir}/${timeStamp}.json`, JSON.stringify({timeStamp, url, title, comment}, null, 2));
+        if (isContent && content) {
+          fs.writeFileSync(`${dir}/${timeStamp}.md`, content);
+        }
+        if (isScreenshot) {
+          closeMainWindow({ popToRootType: PopToRootType.Immediate });
+          const script = `do shell script "screencapture ${dir}/${timeStamp}.png"`;
+          runAppleScript(script);
+        }
+        showToast({ style: Toast.Style.Success, title: "clipped." });
+      } catch (err) {
+        onError(err);
       }
-      showToast({ style: Toast.Style.Success, title: "Clipped successfully!" });
     },
     initialValues: {
       comment: "",
-      captureContent,
-      captureScreenshot,
+      isContent: isContent,
+      isScreenshot: isScreenshot,
     },
   });
-  return { handleSubmit, itemProps };
-};
 
-export { mainHook, preamble };
+  return { data, isLoading, itemProps, handleSubmit };
+};
