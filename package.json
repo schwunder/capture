@@ -8,28 +8,28 @@
   "license": "MIT",
   "preferences": [
     {
-      "name": "clipDirectory",
-      "title": "clip Directory",
+      "name": "directory",
+      "title": "Clip Directory",
       "description": "Directory where clippings are stored",
       "type": "directory",
       "default": "Documents/clip",
       "required": false
     },
     {
-      "name": "captureContent",
-      "title": "capture content",
-      "description": "should the tabs content be captured?",
+      "name": "isContent",
+      "title": "Capture Content",
+      "description": "Should the tab's content be captured as Markdown?",
       "type": "checkbox",
-      "label": "do you want to capture the content?",
+      "label": "Capture page content",
       "required": false,
       "default": false
     },
     {
-      "name": "captureScreenshot",
-      "title": "capture screenshot",
-      "description": "should a screenshot be taken",
+      "name": "isScreenshot",
+      "title": "Capture Screenshot",
+      "description": "Should a screenshot be taken?",
       "type": "checkbox",
-      "label": "do you want to take a screenshot?",
+      "label": "Take a screenshot",
       "required": false,
       "default": true
     }
@@ -37,20 +37,19 @@
   "commands": [
     {
       "name": "index",
-      "title": "CLIP",
-      "subtitle": "capture all the stuff",
-      "description": "what the it should",
+      "title": "Clip Page",
+      "subtitle": "Capture Browser Context",
+      "description": "Captures the active browser tab's title, URL, and optionally content and a screenshot.",
       "mode": "view"
     },
     {
       "name": "instant",
-      "title": "CLIP instant",
-      "subtitle": "capture all the stuff",
-      "description": "what the it should",
+      "title": "Instant Clip",
+      "subtitle": "Capture Browser Context",
+      "description": "Instantly captures the active browser tab based on your preferences.",
       "mode": "no-view"
     }
   ],
-
   "dependencies": {
     "@raycast/api": "^1.102.6",
     "@raycast/utils": "^1.17.0"
